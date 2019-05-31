@@ -49,9 +49,9 @@ async function onPost(req, res) {
 	const messageBody = req.body;
 
 	// TODO(you): Implement onPost.
-	result = await sheet.getRows();
-	rows = result.rows;
-	col_title=rows[0];
+	result = await sheet.getRows()
+	rows = result.rows
+	col_title=rows[0]
 	keys=Object.keys(messageBody)
 	vals=Object.values(messageBody)
 	rowData=[]
@@ -68,7 +68,10 @@ async function onPost(req, res) {
 			col_key=col_title[i]
 			vIndex=keys.findIndex(e=>{return e===col_key})
 			if(vIndex!==-1)
-				rowData.push(vals[vIndex])
+				if(isNaN(vals[vIndex]))
+					rowData.push(vals[vIndex])
+				else
+					rowData.push(Number(vals[vIndex]))
 			else
 			{
 				returnjson='{"response":"error:mismatched key(s)"}'
@@ -99,13 +102,75 @@ async function onPost(req, res) {
 app.post('/api', jsonParser, onPost);
 
 async function onPatch(req, res) {
-	const column	= req.params.column;
+	const column = req.params.column;
 	const value	= req.params.value;
 	const messageBody = req.body;
 
 	// TODO(you): Implement onPatch.
-
-	res.json( { status: 'unimplemented'} );
+	result = await sheet.getRows()
+	rows = result.rows
+	col_title=rows[0]
+	keys=Object.keys(messageBody)
+	returnjson=''
+	if(keys.length>col_title.length)//check patch length
+	{
+		returnjson='{"response":"error:patch longer than original"}'
+		returnjson=JSON.parse(returnjson)
+		res.json(returnjson)
+		return
+	}
+	for(let i=0,l=col_title.length;i<l;i++)//case insensitive
+		col_title[i]=col_title[i].toLowerCase()
+	cIndex=col_title.findIndex(e=>{return column.toLowerCase()===e})
+	rIndex=-1
+	for(let i=1,l=rows.length;i<l;i++)//find target row
+		if(rows[i][cIndex]===value)
+		{
+			rIndex=i
+			break
+		}
+	if(rIndex<0)//row not found
+	{
+		returnjson='{"response": "success,but nothing changed."}'
+		returnjson=JSON.parse(returnjson)
+		res.json(returnjson)
+		return
+	}
+	newRow=rows[rIndex]
+	keys.forEach(e=>{
+		kIndex=col_title.findIndex(c=>{return c===e})
+		if(kIndex<0)
+		{
+			returnjson='{"response":"success,but body contain mismatched key(s)"}'
+			returnjson=JSON.parse(returnjson)
+			res.json(returnjson)
+		}
+		else
+		{
+			newRow[kIndex]=messageBody[e]
+		}
+	})
+	for(let i=0,l=newRow.length;i<l;i++)//convert num-string to number
+	{
+		if(!isNaN(newRow[i]))
+			newRow[i]=Number(newRow[i])
+	}
+	sheet.setRow(rIndex,newRow).then(()=>{
+		console.log('set row'+rIndex+':['+newRow+']')
+		if(returnjson.length===0)
+		{
+			returnjson='{"response":"success"}'
+			returnjson=JSON.parse(returnjson)
+			res.json(returnjson)
+		}
+	}).catch(reason=>{
+		if(returnjson.length===0)
+		{
+			returnjson='{"response":"error:'+reason+'"}'
+			returnjson=JSON.parse(returnjson)
+			res.json(returnjson)
+		}
+	})
 }
 app.patch('/api/:column/:value', jsonParser, onPatch);
 
@@ -114,9 +179,9 @@ async function onDelete(req, res) {
 	const value	= req.params.value;
 
 	// TODO(you): Implement onDelete.
-	result = await sheet.getRows();
-	rows = result.rows;
-	col_title=rows[0];
+	result = await sheet.getRows()
+	rows = result.rows
+	col_title=rows[0]
 	for(let i=0,l=col_title.length;i<l;i++)
 		col_title[i]=col_title[i].toLowerCase()
 	cIndex=col_title.findIndex(e=>{return column.toLowerCase()===e})
@@ -151,7 +216,7 @@ app.delete('/api/:column/:value', onDelete);
 
 
 // Please don't change this; this is needed to deploy on Heroku.
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || /*ILY*/3000;
 
 app.listen(port, function () {
 	console.log(`Server listening on port ${port}!`);
