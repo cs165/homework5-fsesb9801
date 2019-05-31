@@ -111,7 +111,7 @@ app.patch('/api/:column/:value', jsonParser, onPatch);
 
 async function onDelete(req, res) {
 	const column = req.params.column;
-	const value	= req.params.value.toLowerCase();
+	const value	= req.params.value;
 
 	// TODO(you): Implement onDelete.
 	result = await sheet.getRows();
@@ -123,13 +123,12 @@ async function onDelete(req, res) {
 	rIndex=-1
 	for(let i=1,l=rows.length;i<l;i++)
 	{
-		if(rows[i][cIndex].toLowerCase()===value)
+		if(rows[i][cIndex]===value)
 		{
 			rIndex=i
 			break
 		}
 	}
-	
 	if(rIndex===-1)
 	{
 		returnjson='{"response": "success,but nothing changed."}'
