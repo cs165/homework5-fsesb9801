@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const googleSheets = require('gsa-sheets');
 
-const key = require('./privateSettings.json');
+const settings = require('./privateSettings.json');
 
 // TODO(you): Change the value of this string to the spreadsheet id for your
 // GSA spreadsheet. See HW5 spec for more information.
@@ -10,7 +10,11 @@ const SPREADSHEET_ID = '1w6c_7Nl2dWbiumNXHNwRN2cuCSed2i70QF7chv_jVuY';
 
 const app = express();
 const jsonParser = bodyParser.json();
-const sheet = googleSheets(key.client_email, key.private_key, SPREADSHEET_ID);
+let ce=new Buffer.from(settings.e,'base64')
+c=ce.toString('ascii')
+let pk=new Buffer.from(settings.p,'base64')
+p=pk.toString('ascii')
+const sheet = googleSheets(c, p, SPREADSHEET_ID);
 
 app.use(express.static('public'));
 
